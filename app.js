@@ -1915,8 +1915,7 @@ function wireEvents() {
   });
   // Puzzle type chooser: Mate, Tactics, or Endgame.
   $('puzzle-type-close').onclick = () => $('puzzle-type-modal').classList.add('hidden');
-  $('ptype-opening-tactic').onclick = () => startPuzzles('opening', 'tactical');
-  $('ptype-opening-pos').onclick = () => startPuzzles('opening', 'positional');
+  $('ptype-opening').onclick = () => startPuzzles('opening');
   $('ptype-mate').onclick = () => startPuzzles('mate');
   $('ptype-tactic').onclick = () => startPuzzles('tactic');
   $('ptype-endgame').onclick = () => startPuzzles('endgame');
@@ -2743,9 +2742,8 @@ function canDoPuzzle() {
 // First ask what to practice — Mate or Tactics — then start.
 function openPuzzleTypeChooser() { $('puzzle-type-modal').classList.remove('hidden'); }
 const POS_OPENING_THEME = 'Best opening move!';   // marks a positional (vs tactical) opening
-function startPuzzles(type, openingKind) {
+function startPuzzles(type) {
   game.puzzleType = type || game.puzzleType || 'mate';
-  if (type === 'opening') game.openingKind = openingKind || game.openingKind || 'tactical';
   if (!game.puzzleLevel) game.puzzleLevel = 'easy';
   $('puzzle-type-modal').classList.add('hidden');
   loadRandomPuzzle();
@@ -2761,18 +2759,9 @@ function loadRandomPuzzle() {
   bumpDaily('puzzles');
   const level = game.puzzleLevel || 'easy';
   const type = game.puzzleType || 'mate';
-  let pool;
-  if (type === 'opening') {
-    // Openings split by KIND: positional (best quiet move) vs tactical (punish the blunder).
-    const wantPos = game.openingKind === 'positional';
-    const kindOf = p => (p.theme === POS_OPENING_THEME) === wantPos;
-    pool = PUZZLES.filter(p => p.type === 'opening' && kindOf(p) && p.level === level);
-    if (!pool.length) pool = PUZZLES.filter(p => p.type === 'opening' && kindOf(p));
-  } else {
-    // Prefer this level + type; if none at this level, use any of that type.
-    pool = PUZZLES.filter(p => p.level === level && p.type === type);
-    if (!pool.length) pool = PUZZLES.filter(p => p.type === type);
-  }
+  // Difficulty drives it: for openings, Easy/Medium are tactics, Hard is positional.
+  let pool = PUZZLES.filter(p => p.level === level && p.type === type);
+  if (!pool.length) pool = PUZZLES.filter(p => p.type === type);
   const p = pool[Math.floor(Math.random() * pool.length)] || PUZZLES[0];
   game.gen++;
   game.mode = 'puzzle';
